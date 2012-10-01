@@ -18,12 +18,15 @@ def main():
   for session in sessions.split(","):
     process_session(session.strip())
 
+  exit(0)
+
 
 def process_session(session):
   config = yaml.load(open("config.yml", 'r'))
   options = get_options()
 
-  output_dir = os.path.join(os.getcwd(), "output/bills") # absolute path
+  original_wd = os.getcwd()
+  output_dir = os.path.join(original_wd, "output/bills") # absolute path
   mkdir_p(output_dir)
 
   zipfile_name = "bills-%s.zip" % session
@@ -84,8 +87,9 @@ def process_session(session):
     download.s3_url
   ], stdout=open("/dev/null"))
 
+  os.chdir(original_wd)
+
   print "[%s] Uploaded %s to Github." % (session, zipfile_name)
-  exit(0)
 
 
 def get_options():
