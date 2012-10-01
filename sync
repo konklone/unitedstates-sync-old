@@ -10,9 +10,9 @@ def main():
   config = yaml.load(open("config.yml", 'r'))
   options = get_options()
 
-  sessions = options.get('session', None)
+  sessions = options.get('sessions', None)
   if not sessions:
-    print "Provide a --session option."
+    print "Provide a --sessions option."
     return
 
   for session in sessions.split(","):
