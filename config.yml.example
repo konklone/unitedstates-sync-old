@@ -1,0 +1,11 @@
+# syncs data with a Github repository's downloads tab.
+github:
+  organization: 
+  repo: 
+  # uses credentials once to get an OAuth token.
+  credentials:
+    username: 
+    password: 
+
+# root data directory of congress information
+data_directory: 
