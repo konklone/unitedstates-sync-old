@@ -29,7 +29,7 @@ def process_session(session):
   output_dir = os.path.join(original_wd, "output/bills") # absolute path
   mkdir_p(output_dir)
 
-  zipfile_name = "bills-%s.zip" % session
+  zipfile_name = "%s.zip" % session
   zipfile_path = os.path.join(output_dir, zipfile_name)
 
   if os.path.exists(zipfile_path) and options.get('cache', False):
@@ -66,7 +66,7 @@ def process_session(session):
   year = year_for_session(session)
   download = repo.create_download(
     zipfile_name, os.path.getsize(zipfile_path), 
-    "Bill data for Congress no. %s (%i - %i)" % (session, year, year + 1), 
+    "Bill data for the %s Congress (%i - %i)" % (ordinal(session), year, year + 1), 
     "application/zip")
 
   
@@ -118,6 +118,23 @@ def mkdir_p(path):
 # returns first year of the 2-year session
 def year_for_session(session):
   return ((2 * int(session)) + 1788) - 1
+
+# adapted from http://code.activestate.com/recipes/576888-format-a-number-as-an-ordinal/
+def ordinal(value):
+  value = int(value)
+  if value % 100//10 != 1:
+    if value % 10 == 1:
+      ordval = u"%d%s" % (value, "st")
+    elif value % 10 == 2:
+      ordval = u"%d%s" % (value, "nd")
+    elif value % 10 == 3:
+      ordval = u"%d%s" % (value, "rd")
+    else:
+      ordval = u"%d%s" % (value, "th")
+  else:
+    ordval = u"%d%s" % (value, "th")
+
+  return ordval
 
 if __name__ == '__main__':
   main()
