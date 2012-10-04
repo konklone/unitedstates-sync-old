@@ -41,7 +41,7 @@ def process_session(session):
     data_dir = config['data_directory']
 
     # switch working directory to input data dir for relative globs
-    os.chdir(os.path.join(data_dir, "bills", session))
+    os.chdir(os.path.join(data_dir, session, "bills"))
     files = glob.glob("*/*/data.json")
 
     with zipfile.ZipFile(zipfile_path, "w", zipfile.ZIP_DEFLATED) as zf:
