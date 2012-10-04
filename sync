@@ -44,9 +44,10 @@ def process_session(session):
     os.chdir(os.path.join(data_dir, session, "bills"))
     files = glob.glob("*/*/data.json")
 
-    with zipfile.ZipFile(zipfile_path, "w", zipfile.ZIP_DEFLATED) as zf:
-      for f in files:
-        zf.write(f)
+    zf = zipfile.ZipFile(zipfile_path, "w", zipfile.ZIP_DEFLATED)
+    for f in files:
+      zf.write(f)
+    zf.close()
 
 
   print "[%s] Creating download on Github..." % session
