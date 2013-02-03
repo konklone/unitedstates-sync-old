@@ -3,94 +3,64 @@
 import sys, os, glob, errno, subprocess
 import yaml
 import zipfile, zlib
-from github import Github
 
 
 def main():
-  config = yaml.load(open("config.yml", 'r'))
   options = get_options()
 
-  sessions = options.get('sessions', None)
-  if not sessions:
-    print "Provide a --sessions option."
+  congresses = options.get('congresses', None)
+  if not congresses:
+    print "Provide a --congresses option."
     return
 
-  for session in sessions.split(","):
-    process_session(session.strip())
+  for congress in congresses.split(","):
+    process_congress(congress.strip())
 
   exit(0)
 
 
-def process_session(session):
-  config = yaml.load(open("config.yml", 'r'))
+def process_congress(congress):
+  config = yaml.safe_load(open("config.yml", 'r'))
   options = get_options()
 
   original_wd = os.getcwd()
-  output_dir = os.path.join(original_wd, "output/bills") # absolute path
+  output_dir = os.path.join(original_wd, "output") # absolute path
   mkdir_p(output_dir)
 
-  zipfile_name = "%s.zip" % session
+  zipfile_name = "%s.zip" % congress
   zipfile_path = os.path.join(output_dir, zipfile_name)
 
   if os.path.exists(zipfile_path) and options.get('cache', False):
-    print "[%s] Using cached zip file..." % session
+    print "[%s] Using cached zip file..." % congress
 
   else:
-    print "[%s] Zipping up data.json files..." % session
+    print "[%s] Zipping up JSON files..." % congress
 
-    data_dir = config['data_directory']
+    data_dir = config['data']
 
     # switch working directory to input data dir for relative globs
-    os.chdir(os.path.join(data_dir, session, "bills"))
-    files = glob.glob("*/*/data.json")
+    os.chdir(os.path.join(data_dir, congress))
+
+    # looks for JSON files 3 and 4 levels down
+    files = glob.glob("*/*/*/*.json") + glob.glob("*/*/*/*/*.json")
 
     zf = zipfile.ZipFile(zipfile_path, "w", zipfile.ZIP_DEFLATED)
     for f in files:
       zf.write(f)
     zf.close()
 
+    os.chdir(original_wd)
 
-  print "[%s] Creating download on Github..." % session
 
-  username = config['github']['credentials']['username']
-  password = config['github']['credentials']['password']
-  client = Github(username, password)
+  bucket = config['s3']['bucket']
+  s3cmd = config['s3']['s3cmd']
+  s3cfg = config['s3']['s3cfg']
 
-  organization = client.get_organization(config['github']['organization'])
-  repo = organization.get_repo(config['github']['repo'])
+  print "[%s] Uploading file to S3..." % congress
 
-  for download in repo.get_downloads():
-    if download.name == zipfile_name:
-      print "[%s] Deleting existing download..." % session
-      download.delete()
+  os.system("%s --config=%s put -P %s %s/congress/data/%s" % (s3cmd, s3cfg, zipfile_path, bucket, zipfile_name))
 
-  year = year_for_session(session)
-  download = repo.create_download(
-    zipfile_name, os.path.getsize(zipfile_path), 
-    "Bill data for the %s Congress (%i - %i)" % (ordinal(session), year, year + 1), 
-    "application/zip")
-
-  
-  print "[%s] Uploading file to S3..." % session
-
-  os.chdir(output_dir)
-
-  subprocess.call(["curl",
-    '-F key=%s' % download.path,
-    '-F acl=%s' % download.acl,
-    '-F success_action_status=201',
-    '-F Filename=%s' % download.name,
-    '-F AWSAccessKeyId=%s' % download.accesskeyid,
-    '-F Policy=%s' % download.policy,
-    '-F Signature=%s' % download.signature,
-    '-F Content-Type=%s' % download.mime_type,
-    '-F file=@%s' % zipfile_name,
-    download.s3_url
-  ], stdout=open("/dev/null"))
-
-  os.chdir(original_wd)
-
-  print "[%s] Uploaded %s to Github." % (session, zipfile_name)
+  print "[%s] Uploaded %s to S3." % (congress, zipfile_name)
 
 
 def get_options():
@@ -116,9 +86,9 @@ def mkdir_p(path):
     else: 
       raise
 
-# returns first year of the 2-year session
-def year_for_session(session):
-  return ((2 * int(session)) + 1788) - 1
+# returns first year of the 2-year congress
+def year_for_congress(congress):
+  return ((2 * int(congress)) + 1788) - 1
 
 # adapted from http://code.activestate.com/recipes/576888-format-a-number-as-an-ordinal/
 def ordinal(value):

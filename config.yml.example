@@ -1,11 +1,8 @@
-# syncs data with a Github repository's downloads tab.
-github:
-  organization: 
-  repo: 
-  # uses credentials once to get an OAuth token.
-  credentials:
-    username: 
-    password: 
+# syncs data with an S3 bucket. requires s3cmd, with S3 credentials in a s3cfg file.
+s3:
+  bucket: s3://bucketname
+  s3cmd: /path/to/s3cmd
+  s3cfg: /path/to/.s3cfg
 
 # root data directory of congress information
-data_directory: 
+data: /path/to/congress/data
