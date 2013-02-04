@@ -1,4 +1,4 @@
-Set of scripts to sync data from the output of various github.com/unitedstates repos to their Downloads tabs.
+Set of scripts to sync data from the output of various github.com/unitedstates repos to an S3 bucket.
 
 For now, just does bills from the output of [unitedstates/congress](https://github.com/unitedstates/congress):
 
